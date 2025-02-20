@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Sports Ticker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0d1117;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        
+        h1 {
+            margin: 20px 0;
+            font-size: 24px;
+        }
+
+        .ticker-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            background: linear-gradient(90deg, #1e90ff, #ff4500);
+            padding: 10px 0;
+        }
+
+        .ticker {
+            display: flex;
+            gap: 40px;
+            white-space: nowrap;
+            animation: scroll 20s linear infinite;
+        }
+
+        .ticker span {
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 15px;
+            border-radius: 5px;
+        }
+
+        @keyframes scroll {
+            from { transform: translateX(100%); }
+            to { transform: translateX(-100%); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Sports Scores</h1>
+    <div class="ticker-container">
+        <div id="sportsTicker" class="ticker">Loading scores...</div>
+    </div>
+
+    <script>
+        const sports = ["football/nfl", "basketball/nba", "baseball/mlb", "soccer/epl"]; // Add more sports if needed
+
+        async function fetchScores() {
+            let allScores = [];
+
+            for (let sport of sports) {
+                try {
+                    let response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard`);
+                    let data = await response.json();
+                    let scores = data.events.map(event => {
+                        let teams = event.competitions[0].competitors;
+                        return `<span>${teams[0].team.displayName} ${teams[0].score} - ${teams[1].team.displayName} ${teams[1].score}</span>`;
+                    });
+                    allScores = allScores.concat(scores);
+                } catch (error) {
+                    console.error(`Error fetching scores for ${sport}:`, error);
+                }
+            }
+
+            if (allScores.length) {
+                let ticker = document.getElementById("sportsTicker");
+                ticker.innerHTML = allScores.join(""); // Update the ticker content
+            }
+        }
+
+        fetchScores(); // Initial fetch
+        setInterval(fetchScores, 5000); // Fetch new scores every 5 seconds without breaking animation
+    </script>
+</body>
+</html>
