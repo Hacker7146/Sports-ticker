@@ -3,27 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Sports Score Ticker</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: white;
+            text-align: center;
+        }
+        .ticker-container {
+            width: 100%;
+            overflow: hidden;
+            background: #222;
+            padding: 10px 0;
+            white-space: nowrap;
+            position: relative;
+        }
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            animation: scrollLeft 20s linear infinite;
+        }
+        @keyframes scrollLeft {
+            from { transform: translateX(100%); }
+            to { transform: translateX(-100%); }
+        }
+        .score {
+            display: inline-block;
+            margin: 0 20px;
+        }
+        .score a {
+            color: #ffcc00;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <div class="ticker-wrapper">
-        <div class="ticker">
-            <div class="score">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/7/7d/MLB_logo.svg" alt="MLB Logo">
-                <span class="team">Yankees vs Red Sox</span>
-                <span class="score-detail">5-4</span>
-            </div>
-            <div class="score">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/NFL_logo_2017.svg" alt="NFL Logo">
-                <span class="team">Cowboys vs Packers</span>
-                <span class="score-detail">28-14</span>
-            </div>
-            <!-- Additional scores go here -->
-        </div>
+
+    <h1>Live Sports Score Ticker</h1>
+    <div class="ticker-container">
+        <div id="scoreTicker" class="ticker">Loading scores...</div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        const sports = ['football/nfl', 'basketball/nba', 'baseball/mlb', 'hockey/nhl', 'football/ufl'];
+
+        async function fetchScores() {
+            let scores = '';
+            for (const sport of sports) {
+                try {
+                    const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard`);
+                    const data = await response.json();
+                    data.events.forEach(event => {
+                        const competition = event.competitions[0];
+                        const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
+                        const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
+                        const gameLink = event.links?.[0]?.href || '#';
+
+                        scores += `
+                            <span class="score">
+                                <a href="${gameLink}" target="_blank">
+                                    ${awayTeam.team.shortDisplayName} ${awayTeam.score} - 
+                                    ${homeTeam.team.shortDisplayName} ${homeTeam.score}
+                                </a>
+                            </span> | 
+                        `;
+                    });
+                } catch (error) {
+                    console.error(`Error fetching scores for ${sport}:`, error);
+                }
+            }
+            document.getElementById('scoreTicker').innerHTML = scores || 'No live scores available.';
+        }
+
+        fetchScores();
+        setInterval(fetchScores, 60000); // Refresh scores every minute
+    </script>
+
 </body>
 </html>
